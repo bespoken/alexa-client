@@ -4,7 +4,7 @@ import os
 import urllib
 import cherrypy
 import requests
-from alexa_client.settings import DEVICE_TYPE_ID, CLIENT_ID, CLIENT_SECRET 
+from alexa_client.settings import DEVICE_TYPE_ID, CLIENT_ID, CLIENT_SECRET
 
 
 class Start(object):
@@ -21,9 +21,9 @@ class Start(object):
         url = "https://www.amazon.com/ap/oa"
         callback = cherrypy.url() + "authresponse"
         payload = {
-            "client_id": CLIENT_ID, 
-            "scope": "alexa:all", 
-            "scope_data": sd, 
+            "client_id": CLIENT_ID,
+            "scope": "alexa:all",
+            "scope_data": sd,
             "response_type": "code",
             "redirect_uri": callback
         }
@@ -35,23 +35,30 @@ class Start(object):
         code = urllib.quote(cherrypy.request.params['code'])
         callback = cherrypy.url()
         payload = {
-            "client_id": CLIENT_ID, 
-            "client_secret": CLIENT_SECRET, 
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
             "code": code,
-            "grant_type": "authorization_code", 
+            "grant_type": "authorization_code",
             "redirect_uri": callback
         }
         url = "https://api.amazon.com/auth/o2/token"
         r = requests.post(url, data=payload)
         resp = r.json()
         return "Success! Here is your refresh token:<br>{}".format(
-            resp['refresh_token']) 
+            resp['refresh_token'])
 
     index.exposed = True
     authresponse.exposed = True
 
+server_config={
+    'server.socket_host': '0.0.0.0',
+    'server.socket_port':3000,
 
-cherrypy.config.update({'server.socket_host': '0.0.0.0',})
-cherrypy.config.update({'server.socket_port': int(os.environ.get('PORT', '3000')),})
+    'server.ssl_module':'pyopenssl',
+    'server.ssl_certificate':'./ssl.crt',
+    'server.ssl_private_key':'./ssl.pem',
+    'server.ssl_certificate_chain':'./ssl-chain.crt'
+}
+cherrypy.config.update(server_config);
 print('Open http://localhost:3000 to login in amazon alexa service')
 cherrypy.quickstart(Start())
