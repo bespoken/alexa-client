@@ -22,7 +22,7 @@ class AlexaClient(object):
         self.temp_dir = temp_dir
         os.system("mkdir -p {}".format(self.temp_dir))
 
-    def get_token(self, refresh=False):
+    def get_token(self, user_id, refresh=False):
         """Returns AVS access token.
 
         If first call, will send a request to AVS to obtain the token
@@ -35,6 +35,9 @@ class AlexaClient(object):
         Returns:
             AVS access token (str)
         """
+
+        # Get the user_id from Dynamo DB
+        token = self.lookup_user_id(user_id);
         # Return saved token if one exists.
         if self._token and not refresh:
             return self._token
@@ -51,7 +54,25 @@ class AlexaClient(object):
         self._token = res_json['access_token']
         return self._token
 
-    def get_request_params(self):
+    def lookup_user_id(self):
+        token = None
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table('alexa_chat_user')
+        try:
+            response = table.get_item(
+                Key={
+                    'user_id': user_id
+                }
+            )
+        except ClientError as e:
+            print(e.response['Error']['Message'])
+        else:
+            token = response['Item']['avs_token']
+
+        return token
+
+
+    def get_request_params(self, user_id):
         """Returns AVS request parameters
 
         Returns a tuple of parameters needed for an AVS request.
@@ -65,7 +86,7 @@ class AlexaClient(object):
         """
         url = "https://access-alexa-na.amazon.com/v1"
         url += "/avs/speechrecognizer/recognize"
-        headers = {'Authorization' : 'Bearer %s' % self.get_token()}
+        headers = {'Authorization' : 'Bearer %s' % self.get_token(user_id)}
         request_data = {
             "messageHeader": {
                 "deviceContext": [
@@ -123,7 +144,7 @@ class AlexaClient(object):
                 res.status_code, res.text)
             res.raise_for_status()
 
-    def ask(self, audio_file, save_to=None):
+    def ask(self, user_id, audio_file, save_to=None):
         """
         Send a command to Alexa
 
@@ -137,7 +158,7 @@ class AlexaClient(object):
             File path for the response audio file (str).
         """
         with open(audio_file) as in_f:
-            url, headers, request_data = self.get_request_params()
+            url, headers, request_data = self.get_request_params(user_id)
             files = [
                 (
                     'file',
@@ -152,9 +173,9 @@ class AlexaClient(object):
             # Check for HTTP 403
             if res.status_code == 403:
                 # Try to refresh auth token
-                self.get_token(refresh=True)
+                self.get_token(user_id, refresh=True)
                 # Refresh headers
-                url, headers, request_data = self.get_request_params()
+                url, headers, request_data = self.get_request_params(user_id)
                 # Resend request
                 res = requests.post(url, headers=headers, files=files)
             return self.save_response_audio(res, save_to)
