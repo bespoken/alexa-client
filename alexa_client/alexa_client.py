@@ -40,20 +40,21 @@ class AlexaClient(object):
         # Get the user_id from Dynamo DB
         token = self.lookup_user_id(user_id);
         # Return saved token if one exists.
-        if self._token and not refresh:
-            return self._token
+        if token and not refresh:
+            return token
         # Prepare request payload
         payload = {
             "client_id" : self._client_id,
             "client_secret" : self._client_secret,
-            "refresh_token" : self._refresh_token,
+            "refresh_token" : token,
             "grant_type" : "refresh_token"
         }
         url = "https://api.amazon.com/auth/o2/token"
         res = requests.post(url, data=payload)
         res_json = json.loads(res.text)
-        self._token = res_json['access_token']
-        return self._token
+        print(str(res_json))
+        token = res_json['access_token']
+        return token
 
     def lookup_user_id(self, user_id):
         token = None
