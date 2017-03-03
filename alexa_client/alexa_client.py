@@ -39,9 +39,9 @@ class AlexaClient(object):
 
         # Get the user_id from Dynamo DB
         token = self.lookup_user_id(user_id);
-        # Return saved token if one exists.
-        if token and not refresh:
-            return token
+        # # Return saved token if one exists.
+        # if token and not refresh:
+        #     return token
         # Prepare request payload
         payload = {
             "client_id" : self._client_id,
