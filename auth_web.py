@@ -87,6 +87,7 @@ class Start(object):
     authresponse.exposed = True
 
 use_ssl = os.environ["USE_SSL"] == "True"
+print("USE_SSL: " + str(use_ssl));
 if (use_ssl):
     server_config={
         'server.socket_host': '0.0.0.0',
