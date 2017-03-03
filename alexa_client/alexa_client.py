@@ -7,6 +7,7 @@ import json
 import uuid
 import os
 import re
+import boto3
 from requests_futures.sessions import FuturesSession
 
 
