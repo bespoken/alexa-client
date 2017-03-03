@@ -54,7 +54,7 @@ class AlexaClient(object):
         self._token = res_json['access_token']
         return self._token
 
-    def lookup_user_id(self):
+    def lookup_user_id(self, user_id):
         token = None
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.Table('alexa_chat_user')

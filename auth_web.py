@@ -86,7 +86,7 @@ class Start(object):
     index.exposed = True
     authresponse.exposed = True
 
-use_ssl = False
+use_ssl = os.environ["USE_SSL"] == "False"
 if (use_ssl):
     server_config={
         'server.socket_host': '0.0.0.0',
